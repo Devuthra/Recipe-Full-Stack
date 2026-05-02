@@ -19,8 +19,22 @@ body {
 }
 
 /*  Logout button */
-button {
-  cursor: pointer;
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logout-btn {
+  background: #ff9800;
+  color: white;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+}
+
+.logout-btn:hover {
+  background: #e68900;
 }
 
 /*  Form */

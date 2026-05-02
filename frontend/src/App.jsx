@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import API from "./Api/Api";
-import Home from "./Pages/Home";
 import Login from "./Pages/Login";
-import Register from "./Pages/Register";
+import Register from "./Pages/Register"; // ✅ added
 
 function App() {
   const [recipes, setRecipes] = useState([]);
   const [token, setToken] = useState(localStorage.getItem("token"));
+  const [page, setPage] = useState("login"); // ✅ added
 
   const [form, setForm] = useState({
     name: "",
@@ -16,26 +15,37 @@ function App() {
     instructions: "",
   });
 
-  const API = "http://localhost:8081";
+  const BASE_URL = "http://localhost:8081";
 
-  // FETCH
+  const logout = () => {
+    localStorage.removeItem("token");
+    setToken(null);
+  };
+
   const fetchRecipes = () => {
-    fetch(`${API}/recipes`, {
+    fetch(`${BASE_URL}/recipes`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     })
-      .then((res) => res.json())
-      .then((data) => setRecipes(data));
+      .then((res) => {
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+        return res.json();
+      })
+      .then((data) => {
+        if (data) setRecipes(data);
+      });
   };
 
   useEffect(() => {
     if (token) fetchRecipes();
   }, [token]);
 
-  // ADD
   const addRecipe = () => {
-    fetch(`${API}/recipes`, {
+    fetch(`${BASE_URL}/recipes`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -44,13 +54,17 @@ function App() {
       body: JSON.stringify(form),
     }).then(() => {
       fetchRecipes();
-      setForm({ name: "", chef: "", ingredients: "", instructions: "" });
+      setForm({
+        name: "",
+        chef: "",
+        ingredients: "",
+        instructions: "",
+      });
     });
   };
 
-  // DELETE
   const deleteRecipe = (id) => {
-    fetch(`${API}/recipes/${id}`, {
+    fetch(`${BASE_URL}/recipes/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -58,12 +72,11 @@ function App() {
     }).then(() => fetchRecipes());
   };
 
-  // EDIT
   const editRecipe = (r) => {
     const newName = prompt("Enter new name", r.name);
     if (!newName) return;
 
-    fetch(`${API}/recipes/${r.id}`, {
+    fetch(`${BASE_URL}/recipes/${r.id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -73,24 +86,24 @@ function App() {
     }).then(() => fetchRecipes());
   };
 
-  // LOGOUT
-  const logout = () => {
-    localStorage.removeItem("token");
-    setToken(null);
-  };
-
-  // SHOW LOGIN IF NO TOKEN
+  // ✅ FIXED LOGIN/REGISTER SWITCH
   if (!token) {
-    return <Login setToken={setToken} />;
+    if (page === "login") {
+      return <Login setToken={setToken} setPage={setPage} />;
+    } else {
+      return <Register setPage={setPage} />;
+    }
   }
 
   return (
     <div className="container">
-      <h1 className="title">🍲 RecipeHub</h1>
+      <div className="header">
+        <h1 className="title">🍲 RecipeHub</h1>
+        <button className="logout-btn" onClick={logout}>
+          Logout
+        </button>
+      </div>
 
-      <button onClick={logout}>Logout</button>
-
-      {/* FORM */}
       <div className="form">
         <input
           placeholder="Recipe Name"
@@ -120,7 +133,6 @@ function App() {
         <button onClick={addRecipe}>Add Recipe</button>
       </div>
 
-      {/* LIST */}
       <div className="list">
         {recipes.map((r) => (
           <div key={r.id} className="card">

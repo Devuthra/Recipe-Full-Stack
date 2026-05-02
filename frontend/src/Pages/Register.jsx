@@ -1,13 +1,16 @@
 import { useState } from "react";
 import API from "../Api/Api";
-import { useNavigate } from "react-router-dom";
 
-export default function Register() {
+export default function Register({ setPage }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const navigate = useNavigate();
 
   const handleRegister = async () => {
+    if (!username || !password) {
+      alert("Please enter username & password");
+      return;
+    }
+
     try {
       await API.post("/auth/register", {
         username,
@@ -15,28 +18,47 @@ export default function Register() {
       });
 
       alert("Registered Successfully!");
-      navigate("/login");
+
+      // 🔹 Go back to login page
+      setPage("login");
+
     } catch (err) {
+      console.log(err);
       alert("Registration Failed");
     }
   };
 
   return (
-    <div>
-      <h2>Register</h2>
+    <div className="login-container">
+      <div className="login-box">
+        <h2>Register</h2>
 
-      <input
-        placeholder="Username"
-        onChange={(e) => setUsername(e.target.value)}
-      />
+        <input
+          placeholder="Username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+        />
 
-      <input
-        type="password"
-        placeholder="Password"
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
-      <button onClick={handleRegister}>Register</button>
+        <button onClick={handleRegister}>Register</button>
+
+        {/* 🔹 Back to login */}
+        <p style={{ marginTop: "10px" }}>
+          Already have an account?{" "}
+          <span
+            style={{ color: "blue", cursor: "pointer" }}
+            onClick={() => setPage("login")}
+          >
+            Login
+          </span>
+        </p>
+      </div>
     </div>
   );
 }
